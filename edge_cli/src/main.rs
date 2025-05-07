@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
+use edgelib::model::PuzzleStructure;
 
 #[derive(Parser, Debug)]
 #[command(name = "Edge Puzzle CLI")]
@@ -44,7 +45,7 @@ enum Commands {
 enum SearchOrder {
     ScanRows,
     ScanColumns,
-    ScanShortest,
+    ScanAlternate,
     SpiralIn,
     SpiralOut,
     FrameFirst,
@@ -53,4 +54,17 @@ enum SearchOrder {
 fn main() {
     // Parse the command-line arguments
     let args = CliArgs::parse();
+
+    match &args.command {
+        Commands::Profile {
+            x,
+            y,
+            border,
+            middle,
+            searches,
+            output,
+        } => {
+            let puzzle_structure = PuzzleStructure::new(*x, *y, *border, *middle);
+        }
+    }
 }

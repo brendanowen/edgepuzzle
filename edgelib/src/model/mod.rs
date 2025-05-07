@@ -1,3 +1,3 @@
-mod definition;
+mod puzzle_structure;
 
-pub use definition::*;
+pub use puzzle_structure::*;

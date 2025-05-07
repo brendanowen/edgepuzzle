@@ -1,21 +1,21 @@
 #[derive(Debug)]
 pub struct PuzzleStructure {
-    width: usize,
-    height: usize,
-    border_types: usize,
-    middle_types: usize,
-    grid: Vec<Vec<Location>>,
-    corners: usize,
-    edges: usize,
-    interiors: usize,
-    border_joins: usize,
-    middle_joins: usize,
-    border_join_counts: Vec<usize>,
-    middle_join_counts: Vec<usize>,
+    pub width: usize,
+    pub height: usize,
+    pub border_types: usize,
+    pub middle_types: usize,
+    pub grid: Vec<Vec<Location>>,
+    pub corners: usize,
+    pub edges: usize,
+    pub interiors: usize,
+    pub border_joins: usize,
+    pub middle_joins: usize,
+    pub border_join_counts: Vec<usize>,
+    pub middle_join_counts: Vec<usize>,
 }
 
 #[derive(Clone, Debug)]
-struct Location {
+pub struct Location {
     x: usize,
     y: usize,
     location_type: LocationType,
@@ -46,7 +46,7 @@ const COORDINATES: [(isize, isize); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
 
 impl PuzzleStructure {
     pub fn new(width: usize, height: usize, border_types: usize, middle_types: usize) -> Self {
-        if width <= 1 || height <= 0 {
+        if width <= 1 || height <= 1 {
             panic!("Width and height must be greater than 1");
         }
 

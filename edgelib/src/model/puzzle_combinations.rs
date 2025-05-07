@@ -1,13 +1,62 @@
 use num_bigint::BigUint;
 use num_integer::gcd;
 
-pub fn middle_joins(join_counts: Vec<usize>) -> Vec<(BigUint, BigUint)> {
+use crate::model::PuzzleStructure;
+
+pub struct PuzzleCombinations {
+    middle_probablity: Vec<(BigUint, BigUint)>,
+    border_probablity: Vec<(BigUint, BigUint)>,
+    corner_combinations: Vec<BigUint>,
+    edge_combinations: Vec<BigUint>,
+    interior_combinations: Vec<BigUint>,
+}
+
+impl PuzzleCombinations {
+    pub fn new(puzzle_structure: &PuzzleStructure) -> Self {
+        let size1: usize = puzzle_structure.border_join_counts.iter().sum();
+        let size2: usize = puzzle_structure.middle_join_counts.iter().sum::<usize>() * 2;
+        let size3: usize = puzzle_structure.corners;
+        let size4: usize = puzzle_structure.edges;
+        let size5: usize = puzzle_structure.interiors;
+        let max_size: usize = *(vec![size1, size2, size3, size4, size5]
+            .iter()
+            .max()
+            .unwrap());
+        let f: Vec<BigUint> = generate_factorials(max_size);
+        let p: Vec<Vec<BigUint>> = generate_permutions(&f);
+        let c: Vec<Vec<BigUint>> = generate_combinations(&f);
+
+        let middle_probablity: Vec<(BigUint, BigUint)> =
+            middle_joins(&puzzle_structure.middle_join_counts, &p, &c);
+        let border_probablity: Vec<(BigUint, BigUint)> =
+            border_joins(&puzzle_structure.border_join_counts, &p, &c);
+        let corner_combinations: Vec<BigUint> = p[puzzle_structure.corners].clone();
+        let edge_combinations: Vec<BigUint> = p[puzzle_structure.edges].clone();
+        let interior_combinations: Vec<BigUint> = p[puzzle_structure.interiors]
+            .iter()
+            .enumerate()
+            .map(|(index, combinations)| {
+                combinations.clone() * BigUint::from(4usize).pow(index as u32)
+            })
+            .collect();
+
+        PuzzleCombinations {
+            middle_probablity,
+            border_probablity,
+            corner_combinations,
+            edge_combinations,
+            interior_combinations,
+        }
+    }
+}
+
+fn middle_joins(
+    join_counts: &Vec<usize>,
+    p: &Vec<Vec<BigUint>>,
+    c: &Vec<Vec<BigUint>>,
+) -> Vec<(BigUint, BigUint)> {
     let join_types: usize = join_counts.len();
     let total_joints: usize = join_counts.iter().sum();
-    let total_edges: usize = total_joints * 2;
-    let f: Vec<BigUint> = generate_factorials(total_edges);
-    let p: Vec<Vec<BigUint>> = generate_permutions(&f);
-    let c: Vec<Vec<BigUint>> = generate_combinations(&f);
 
     let mut valid_combinations: Vec<Vec<BigUint>> =
         vec![vec![BigUint::ZERO; total_joints + 1]; join_types + 1];
@@ -39,12 +88,13 @@ pub fn middle_joins(join_counts: Vec<usize>) -> Vec<(BigUint, BigUint)> {
         .collect()
 }
 
-pub fn border_joins(join_counts: Vec<usize>) -> Vec<(BigUint, BigUint)> {
+fn border_joins(
+    join_counts: &Vec<usize>,
+    p: &Vec<Vec<BigUint>>,
+    c: &Vec<Vec<BigUint>>,
+) -> Vec<(BigUint, BigUint)> {
     let join_types: usize = join_counts.len();
     let total_joints: usize = join_counts.iter().sum();
-    let f: Vec<BigUint> = generate_factorials(total_joints);
-    let p: Vec<Vec<BigUint>> = generate_permutions(&f);
-    let c: Vec<Vec<BigUint>> = generate_combinations(&f);
 
     let mut valid_combinations: Vec<Vec<BigUint>> =
         vec![vec![BigUint::ZERO; total_joints + 1]; join_types + 1];
@@ -110,8 +160,8 @@ fn generate_combinations(factorial: &Vec<BigUint>) -> Vec<Vec<BigUint>> {
 }
 
 fn reduce_fraction(numerator: BigUint, denominator: BigUint) -> (BigUint, BigUint) {
-    if denominator == 0u32.into() {
-        return (0u32.into(), 0u32.into()); // Handle division by zero
+    if denominator == BigUint::ZERO {
+        return (numerator, denominator); // Handle division by zero
     }
 
     let common_divisor = gcd(numerator.clone(), denominator.clone()); // Use clone to avoid ownership issues
@@ -123,17 +173,7 @@ fn reduce_fraction(numerator: BigUint, denominator: BigUint) -> (BigUint, BigUin
 
 #[cfg(test)]
 mod tests {
-    use crate::combinations::{border_joins, middle_joins};
 
     #[test]
-    fn test_middle_joins() {
-        let middle_joins = middle_joins(vec![35; 12]);
-        println!("{:?}", middle_joins);
-    }
-
-    #[test]
-    fn test_border_joins() {
-        let border_joins = border_joins(vec![12; 5]);
-        println!("{:?}", border_joins);
-    }
+    fn test_border_joins() {}
 }

@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
+use edgelib::model::PuzzleCombinations;
 use edgelib::model::PuzzleStructure;
 use edgelib::model::SearchOption;
 use edgelib::model::SearchOrder;
@@ -98,7 +99,8 @@ fn main() {
             searches,
             output,
         } => {
-            let puzzle_structure = PuzzleStructure::new(*x, *y, *border, *middle);
+            let puzzle_structure: PuzzleStructure = PuzzleStructure::new(*x, *y, *border, *middle);
+            let puzzle: PuzzleCombinations = PuzzleCombinations::new(&puzzle_structure);
             let search_orders: Vec<SearchOrder> = searches
                 .iter()
                 .map(|search_type| SearchOrder::new(*x, *y, SearchOption::from(*search_type)))

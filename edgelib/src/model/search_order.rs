@@ -1,12 +1,12 @@
 pub struct SearchOrder {
-    width: usize,
-    height: usize,
-    size: usize,
-    order: Vec<Location>,
+    pub width: usize,
+    pub height: usize,
+    pub size: usize,
+    pub order: Vec<Location>,
 }
 
 #[derive(Clone)]
-struct Location {
+pub struct Location {
     x: usize,
     y: usize,
 }
@@ -28,7 +28,7 @@ pub enum SearchOption {
 
 impl SearchOrder {
     pub fn new(width: usize, height: usize, search_option: SearchOption) -> Self {
-        if width <= 1 || height <= 0 {
+        if width <= 1 || height <= 1 {
             panic!("Width and height must be greater than 1");
         }
 

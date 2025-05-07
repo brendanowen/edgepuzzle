@@ -1,0 +1,31 @@
+{
+	"name": "Rust",
+	"build": {
+        "dockerfile": "Dockerfile"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"dustypomerleau.rust-syntax",
+				"ms-vscode-remote.remote-containers",
+				"vscode-icons-team.vscode-icons",
+				"rangav.vscode-thunder-client",
+				"rust-lang.rust-analyzer",
+				"TechTheAwesome.rust-yew",
+				"vadimcn.vscode-lldb",
+				"tamasfe.even-better-toml",
+				"svelte.svelte-vscode",
+				"eamodio.gitlens",
+				"ritwickdey.LiveServer",
+				"fill-labs.dependi"
+			],
+			"settings": {
+				"files.autoSave": "onFocusChange",
+				"editor.defaultFormatter": "rust-lang.rust-analyzer",
+				"editor.formatOnSave": true
+			}
+		}
+	}
+}
+

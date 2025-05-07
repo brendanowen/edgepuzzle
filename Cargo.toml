@@ -1,0 +1,4 @@
+[workspace]
+members = [ "edge_cli","edgelib"]
+default-members = ["edge_cli"]
+resolver = "2"

@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use edgelib::model::PuzzleStructure;
+use edgelib::model::SearchOption;
+use edgelib::model::SearchOrder;
 
 #[derive(Parser, Debug)]
 #[command(name = "Edge Puzzle CLI")]
@@ -33,7 +35,7 @@ enum Commands {
 
         /// Comma-delimited list of search orders to calculate.
         #[arg(short, long, value_enum, num_args = 1.., value_delimiter = ',')]
-        searches: Vec<SearchOrder>, // Made optional to avoid requiring it
+        searches: Vec<SearchType>, // Made optional to avoid requiring it
 
         /// Output search profile. "-" writes to stdout.
         #[arg(short, long, value_name = "CSV FILE")]
@@ -42,14 +44,46 @@ enum Commands {
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
-enum SearchOrder {
+enum SearchType {
     ScanRows,
     ScanColumns,
-    ScanAlternate,
+    ScanLargest,
+    BuildSquare,
     SpiralIn,
+    SpiralInSquare,
     SpiralOut,
-    FrameFirst,
+    SpiralOutSquare,
+    FrameFirstRows,
+    FrameFirstColumns,
+    FrameLastRows,
+    FrameLastColumns,
 }
+
+macro_rules! impl_from_enum {
+    ($from_enum:ident, $to_enum:ident) => {
+        impl From<$from_enum> for $to_enum {
+            fn from(e: $from_enum) -> Self {
+                match e {
+                    $from_enum::ScanRows => $to_enum::ScanRows,
+                    $from_enum::ScanColumns => $to_enum::ScanColumns,
+                    $from_enum::ScanLargest => $to_enum::ScanLargest,
+                    $from_enum::BuildSquare => $to_enum::BuildSquare,
+                    $from_enum::SpiralIn => $to_enum::SpiralIn,
+                    $from_enum::SpiralInSquare => $to_enum::SpiralInSquare,
+                    $from_enum::SpiralOut => $to_enum::SpiralOut,
+                    $from_enum::SpiralOutSquare => $to_enum::SpiralOutSquare,
+                    $from_enum::FrameFirstRows => $to_enum::FrameFirstRows,
+                    $from_enum::FrameFirstColumns => $to_enum::FrameFirstColumns,
+                    $from_enum::FrameLastRows => $to_enum::FrameLastRows,
+                    $from_enum::FrameLastColumns => $to_enum::FrameLastColumns,
+                }
+            }
+        }
+    };
+}
+
+impl_from_enum!(SearchType, SearchOption);
+impl_from_enum!(SearchOption, SearchType);
 
 fn main() {
     // Parse the command-line arguments
@@ -65,6 +99,10 @@ fn main() {
             output,
         } => {
             let puzzle_structure = PuzzleStructure::new(*x, *y, *border, *middle);
+            let search_orders: Vec<SearchOrder> = searches
+                .iter()
+                .map(|search_type| SearchOrder::new(*x, *y, SearchOption::from(*search_type)))
+                .collect();
         }
     }
 }

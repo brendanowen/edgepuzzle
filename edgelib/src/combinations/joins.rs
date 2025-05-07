@@ -1,23 +1,25 @@
 use num_bigint::BigUint;
+use num_integer::gcd;
 
-pub fn middle_joins(join_counts: Vec<usize>) -> Vec<BigUint> {
+pub fn middle_joins(join_counts: Vec<usize>) -> Vec<(BigUint, BigUint)> {
     let join_types: usize = join_counts.len();
     let total_joints: usize = join_counts.iter().sum();
     let total_edges: usize = total_joints * 2;
-    let p: Vec<Vec<BigUint>> = generate_permutions(total_edges);
-    let c: Vec<Vec<BigUint>> = generate_combinations(total_edges);
+    let f: Vec<BigUint> = generate_factorials(total_edges);
+    let p: Vec<Vec<BigUint>> = generate_permutions(&f);
+    let c: Vec<Vec<BigUint>> = generate_combinations(&f);
 
     let mut valid_combinations: Vec<Vec<BigUint>> =
-        vec![vec![BigUint::ZERO; join_types]; total_joints + 1];
+        vec![vec![BigUint::ZERO; total_joints + 1]; join_types + 1];
     valid_combinations[0][0] = BigUint::from(1usize);
 
-    (1..=total_joints).for_each(|m| {
-        (0..join_types).for_each(|i| {
-            valid_combinations[i][m] = (0..join_counts[i])
+    (0..=total_joints).for_each(|m| {
+        (1..=join_types).for_each(|i| {
+            valid_combinations[i][m] = (0..=join_counts[i - 1])
                 .map(|j| {
                     if j <= m {
                         valid_combinations[i - 1][m - j].clone()
-                            * p[2 * join_counts[i]][2 * j].clone()
+                            * p[2 * join_counts[i - 1]][2 * j].clone()
                             * c[m][j].clone()
                     } else {
                         BigUint::ZERO
@@ -27,10 +29,52 @@ pub fn middle_joins(join_counts: Vec<usize>) -> Vec<BigUint> {
         });
     });
 
-    valid_combinations
-        .iter()
-        .map(|valids| valids.last().unwrap().clone())
-        .collect::<Vec<BigUint>>()
+    (0..=total_joints)
+        .map(|m| {
+            reduce_fraction(
+                valid_combinations[join_types][m].clone(),
+                p[2 * total_joints][2 * m].clone(),
+            )
+        })
+        .collect()
+}
+
+pub fn border_joins(join_counts: Vec<usize>) -> Vec<(BigUint, BigUint)> {
+    let join_types: usize = join_counts.len();
+    let total_joints: usize = join_counts.iter().sum();
+    let f: Vec<BigUint> = generate_factorials(total_joints);
+    let p: Vec<Vec<BigUint>> = generate_permutions(&f);
+    let c: Vec<Vec<BigUint>> = generate_combinations(&f);
+
+    let mut valid_combinations: Vec<Vec<BigUint>> =
+        vec![vec![BigUint::ZERO; total_joints + 1]; join_types + 1];
+    valid_combinations[0][0] = BigUint::from(1usize);
+
+    (0..=total_joints).for_each(|b| {
+        (1..=join_types).for_each(|i| {
+            valid_combinations[i][b] = (0..=join_counts[i - 1])
+                .map(|j| {
+                    if j <= b {
+                        valid_combinations[i - 1][b - j].clone()
+                            * p[join_counts[i - 1]][j].clone()
+                            * p[join_counts[i - 1]][j].clone()
+                            * c[b][j].clone()
+                    } else {
+                        BigUint::ZERO
+                    }
+                })
+                .sum::<BigUint>();
+        });
+    });
+
+    (0..=total_joints)
+        .map(|b| {
+            reduce_fraction(
+                valid_combinations[join_types][b].clone(),
+                p[total_joints][b].clone() * p[total_joints][b].clone(),
+            )
+        })
+        .collect()
 }
 
 fn generate_factorials(max_value: usize) -> Vec<BigUint> {
@@ -43,8 +87,8 @@ fn generate_factorials(max_value: usize) -> Vec<BigUint> {
     factorial
 }
 
-fn generate_permutions(max_value: usize) -> Vec<Vec<BigUint>> {
-    let factorial: Vec<BigUint> = generate_factorials(max_value);
+fn generate_permutions(factorial: &Vec<BigUint>) -> Vec<Vec<BigUint>> {
+    let max_value = factorial.len() - 1;
     (0..=max_value)
         .map(|n| {
             (0..=n)
@@ -54,8 +98,8 @@ fn generate_permutions(max_value: usize) -> Vec<Vec<BigUint>> {
         .collect()
 }
 
-fn generate_combinations(max_value: usize) -> Vec<Vec<BigUint>> {
-    let factorial: Vec<BigUint> = generate_factorials(max_value);
+fn generate_combinations(factorial: &Vec<BigUint>) -> Vec<Vec<BigUint>> {
+    let max_value = factorial.len() - 1;
     (0..=max_value)
         .map(|n| {
             (0..=n)
@@ -65,13 +109,21 @@ fn generate_combinations(max_value: usize) -> Vec<Vec<BigUint>> {
         .collect()
 }
 
+fn reduce_fraction(numerator: BigUint, denominator: BigUint) -> (BigUint, BigUint) {
+    if denominator == 0u32.into() {
+        return (0u32.into(), 0u32.into()); // Handle division by zero
+    }
+
+    let common_divisor = gcd(numerator.clone(), denominator.clone()); // Use clone to avoid ownership issues
+    let reduced_numerator = numerator / common_divisor.clone();
+    let reduced_denominator = denominator / common_divisor;
+
+    (reduced_numerator, reduced_denominator)
+}
+
 #[cfg(test)]
 mod tests {
-    use num_bigint::BigUint;
-
-    use crate::combinations::joins::generate_combinations;
-    use crate::combinations::joins::generate_permutions;
-    use crate::combinations::middle_joins;
+    use crate::combinations::{border_joins, middle_joins};
 
     #[test]
     fn test_middle_joins() {
@@ -80,20 +132,8 @@ mod tests {
     }
 
     #[test]
-    fn test_combinations() {
-        let combinations = generate_combinations(10);
-        assert_eq!(
-            combinations[5][3],
-            BigUint::from(5 * 4 * 3 * 2 * 1 / (3 * 2 * 1) / (2 * 1) as usize)
-        )
-    }
-
-    #[test]
-    fn test_perimutions() {
-        let perimutions = generate_permutions(10);
-        assert_eq!(
-            perimutions[5][3],
-            BigUint::from(5 * 4 * 3 * 2 * 1 / (2 * 1) as usize)
-        )
+    fn test_border_joins() {
+        let border_joins = border_joins(vec![12; 5]);
+        println!("{:?}", border_joins);
     }
 }

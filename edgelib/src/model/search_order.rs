@@ -1,5 +1,3 @@
-use std::iter;
-
 pub struct SearchOrder {
     width: usize,
     height: usize,

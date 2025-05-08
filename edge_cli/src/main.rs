@@ -103,15 +103,8 @@ fn main() {
             output,
         } => {
             let puzzle_structure: PuzzleStructure = PuzzleStructure::new(*x, *y, *border, *middle);
-            let puzzle_1: PuzzleCombinations = PuzzleCombinations::new(&puzzle_structure);
-            puzzle_1
-                .middle_probablity
-                .iter()
-                .enumerate()
-                .for_each(|(index, prob)| {
-                    let probability: f64 = prob.0.to_f64().unwrap() / prob.1.to_f64().unwrap();
-                    eprintln!("{}", probability);
-                });
+            let puzzle_combinations: PuzzleCombinations =
+                PuzzleCombinations::new(&puzzle_structure);
 
             let search_orders: Vec<SearchOrder> = searches
                 .iter()

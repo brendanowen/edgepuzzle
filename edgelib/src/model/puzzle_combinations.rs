@@ -1,5 +1,5 @@
 use num_bigint::BigUint;
-use num_integer::gcd;
+use num_traits::ToPrimitive;
 
 use crate::model::PuzzleStructure;
 
@@ -9,6 +9,11 @@ pub struct PuzzleCombinations {
     pub corner_combinations: Vec<BigUint>,
     pub edge_combinations: Vec<BigUint>,
     pub interior_combinations: Vec<BigUint>,
+    pub log10_middle: Vec<f64>,
+    pub log10_border: Vec<f64>,
+    pub log10_corner: Vec<f64>,
+    pub log10_edge: Vec<f64>,
+    pub log10_interior: Vec<f64>,
 }
 
 impl PuzzleCombinations {
@@ -40,14 +45,66 @@ impl PuzzleCombinations {
             })
             .collect();
 
+        let log10_middle: Vec<f64> = convert_ratio(&middle_probablity);
+        let log10_border: Vec<f64> = convert_ratio(&border_probablity);
+        let log10_corner: Vec<f64> = convert_value(&corner_combinations);
+        let log10_edge: Vec<f64> = convert_value(&edge_combinations);
+        let log10_interior: Vec<f64> = convert_value(&interior_combinations);
+
         PuzzleCombinations {
             middle_probablity,
             border_probablity,
             corner_combinations,
             edge_combinations,
             interior_combinations,
+            log10_middle,
+            log10_border,
+            log10_corner,
+            log10_edge,
+            log10_interior,
         }
     }
+}
+
+fn approximate_log10(n: &BigUint) -> f64 {
+    // 1. Find the number of digits.
+    let digit_count = n.to_string().len();
+
+    // 2. Reduce the number of digits if it's too large.  We want to work
+    // with a smaller number that can be accurately represented by f64.
+    let reduced_n = if digit_count > 18 {
+        // Reduce to a number with at most 18 digits (f64 can precisely
+        // represent integers up to around 2^53, which is about 16 decimal digits,
+        // but we give a bit of extra room).  This reduction is done by
+        // dividing by 10^(number of digits - 18).
+        let reduction_factor = BigUint::from(10_u32).pow((digit_count - 18) as u32);
+        (n / reduction_factor).to_f64()
+    } else {
+        //if the digit count is already small enough, just convert it to f64
+        n.to_f64()
+    }
+    .unwrap();
+
+    // 3. Calculate the approximate log10 of the reduced number.
+    let approx_log10 = reduced_n.log10();
+
+    // 4. Add the number of digits back to the result, adjusting for the reduction.
+    if digit_count > 18 {
+        approx_log10 + (digit_count - 18) as f64
+    } else {
+        approx_log10
+    }
+}
+
+fn convert_value(list: &[BigUint]) -> Vec<f64> {
+    list.iter().map(|item| approximate_log10(item)).collect()
+}
+
+fn convert_ratio(list_duals: &[(BigUint, BigUint)]) -> Vec<f64> {
+    list_duals
+        .iter()
+        .map(|item| approximate_log10(&item.0) - approximate_log10(&item.1))
+        .collect()
 }
 
 fn middle_joins(
@@ -80,7 +137,7 @@ fn middle_joins(
 
     (0..=total_joints)
         .map(|m| {
-            reduce_fraction(
+            (
                 valid_combinations[join_types][m].clone(),
                 p[2 * total_joints][2 * m].clone(),
             )
@@ -119,7 +176,7 @@ fn border_joins(
 
     (0..=total_joints)
         .map(|b| {
-            reduce_fraction(
+            (
                 valid_combinations[join_types][b].clone(),
                 p[total_joints][b].clone() * p[total_joints][b].clone(),
             )
@@ -157,18 +214,6 @@ fn generate_combinations(factorial: &Vec<BigUint>) -> Vec<Vec<BigUint>> {
                 .collect()
         })
         .collect()
-}
-
-fn reduce_fraction(numerator: BigUint, denominator: BigUint) -> (BigUint, BigUint) {
-    if denominator == BigUint::ZERO {
-        return (numerator, denominator); // Handle division by zero
-    }
-
-    let common_divisor = gcd(numerator.clone(), denominator.clone()); // Use clone to avoid ownership issues
-    let reduced_numerator = numerator / common_divisor.clone();
-    let reduced_denominator = denominator / common_divisor;
-
-    (reduced_numerator, reduced_denominator)
 }
 
 #[cfg(test)]

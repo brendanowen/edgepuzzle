@@ -11,11 +11,11 @@ pub struct SearchProgress {
 
 #[derive(Clone, Debug)]
 pub struct Used {
-    corners: usize,
-    edges: usize,
-    interiors: usize,
-    borders: usize,
-    middles: usize,
+    pub corners: usize,
+    pub edges: usize,
+    pub interiors: usize,
+    pub borders: usize,
+    pub middles: usize,
 }
 
 impl SearchProgress {

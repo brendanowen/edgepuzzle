@@ -1,4 +1,4 @@
-use num_traits::ToPrimitive;
+use edgelib::model::SearchNodes;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use edgelib::model::PuzzleCombinations;
@@ -39,7 +39,15 @@ enum Commands {
 
         /// Comma-delimited list of search orders to calculate.
         #[arg(short, long, value_enum, num_args = 1.., value_delimiter = ',')]
-        searches: Vec<SearchType>, // Made optional to avoid requiring it
+        searches: Vec<SearchType>,
+
+        /// Comma-delimited list of border join counts.
+        #[arg(long, value_name = "INTEGERS", num_args = 1.., value_delimiter = ',')]
+        border_joins: Option<Vec<usize>>,
+
+        /// Comma-delimited list of middle join counts.
+        #[arg(long, value_name = "INTEGERS", num_args = 1.., value_delimiter = ',')]
+        middle_joins: Option<Vec<usize>>,
 
         /// Output search profile. "-" writes to stdout.
         #[arg(short, long, value_name = "CSV FILE")]
@@ -101,8 +109,18 @@ fn main() {
             middle,
             searches,
             output,
+            border_joins,
+            middle_joins,
         } => {
-            let puzzle_structure: PuzzleStructure = PuzzleStructure::new(*x, *y, *border, *middle);
+            let mut puzzle_structure: PuzzleStructure =
+                PuzzleStructure::new(*x, *y, *border, *middle);
+            if let Some(middles) = middle_joins {
+                puzzle_structure.middle_join_counts = middles.clone();
+            }
+            if let Some(borders) = border_joins {
+                puzzle_structure.border_join_counts = borders.clone();
+            }
+
             let puzzle_combinations: PuzzleCombinations =
                 PuzzleCombinations::new(&puzzle_structure);
 
@@ -115,7 +133,43 @@ fn main() {
                 .map(|search_order| SearchProgress::new(&puzzle_structure, search_order))
                 .collect();
 
-            eprintln!("Done");
+            let search_nodes: Vec<SearchNodes> = search_progress
+                .iter()
+                .map(|search_progress| SearchNodes::new(&puzzle_combinations, search_progress))
+                .collect();
+
+            let mut result_string = String::new();
+            result_string.push_str("Depth");
+            for search in searches {
+                result_string.push_str(&format!(",{:?}", search));
+            }
+            result_string.push_str("\n");
+
+            let size = x * y;
+
+            for depth in 0..=size {
+                result_string.push_str(&format!("{}", depth));
+                for search_node in search_nodes.iter() {
+                    result_string.push_str(&format!(",{}", search_node.nodes[depth]));
+                }
+                result_string.push_str("\n");
+            }
+
+            output_default_stdout(output, result_string);
         }
+    }
+}
+
+/// Outputs the result to a file or stdout
+/// If the output is "-", it writes to stdout.
+/// Otherwise, it writes to the specified file.
+/// If the file already exists, it will be overwritten.
+/// If the file cannot be written, it will panic.
+fn output_default_stdout(output: &str, string: String) {
+    if output != "-" {
+        std::fs::write(output, string).expect("Unable to write to file");
+        eprintln!("Data written to file: {}", output);
+    } else {
+        println!("{}", string);
     }
 }

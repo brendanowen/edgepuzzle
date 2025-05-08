@@ -1,8 +1,11 @@
+use num_traits::ToPrimitive;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use edgelib::model::PuzzleCombinations;
 use edgelib::model::PuzzleStructure;
 use edgelib::model::SearchOption;
 use edgelib::model::SearchOrder;
+use edgelib::model::SearchProgress;
 
 #[derive(Parser, Debug)]
 #[command(name = "Edge Puzzle CLI")]
@@ -100,11 +103,26 @@ fn main() {
             output,
         } => {
             let puzzle_structure: PuzzleStructure = PuzzleStructure::new(*x, *y, *border, *middle);
-            let puzzle: PuzzleCombinations = PuzzleCombinations::new(&puzzle_structure);
+            let puzzle_1: PuzzleCombinations = PuzzleCombinations::new(&puzzle_structure);
+            puzzle_1
+                .middle_probablity
+                .iter()
+                .enumerate()
+                .for_each(|(index, prob)| {
+                    let probability: f64 = prob.0.to_f64().unwrap() / prob.1.to_f64().unwrap();
+                    eprintln!("{}", probability);
+                });
+
             let search_orders: Vec<SearchOrder> = searches
                 .iter()
                 .map(|search_type| SearchOrder::new(*x, *y, SearchOption::from(*search_type)))
                 .collect();
+            let search_progress: Vec<SearchProgress> = search_orders
+                .iter()
+                .map(|search_order| SearchProgress::new(&puzzle_structure, search_order))
+                .collect();
+
+            eprintln!("Done");
         }
     }
 }

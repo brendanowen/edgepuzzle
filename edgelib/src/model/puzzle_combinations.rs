@@ -4,11 +4,11 @@ use num_integer::gcd;
 use crate::model::PuzzleStructure;
 
 pub struct PuzzleCombinations {
-    middle_probablity: Vec<(BigUint, BigUint)>,
-    border_probablity: Vec<(BigUint, BigUint)>,
-    corner_combinations: Vec<BigUint>,
-    edge_combinations: Vec<BigUint>,
-    interior_combinations: Vec<BigUint>,
+    pub middle_probablity: Vec<(BigUint, BigUint)>,
+    pub border_probablity: Vec<(BigUint, BigUint)>,
+    pub corner_combinations: Vec<BigUint>,
+    pub edge_combinations: Vec<BigUint>,
+    pub interior_combinations: Vec<BigUint>,
 }
 
 impl PuzzleCombinations {

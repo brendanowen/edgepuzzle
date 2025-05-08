@@ -4,7 +4,7 @@ pub struct PuzzleStructure {
     pub height: usize,
     pub border_types: usize,
     pub middle_types: usize,
-    pub grid: Vec<Vec<Location>>,
+    pub grid: Vec<Vec<GridLocation>>,
     pub corners: usize,
     pub edges: usize,
     pub interiors: usize,
@@ -15,29 +15,29 @@ pub struct PuzzleStructure {
 }
 
 #[derive(Clone, Debug)]
-pub struct Location {
-    x: usize,
-    y: usize,
-    location_type: LocationType,
-    joins: Vec<Join>,
+pub struct GridLocation {
+    pub x: usize,
+    pub y: usize,
+    pub location_type: LocationType,
+    pub joins: Vec<Join>,
 }
 
 #[derive(Clone, Debug)]
-struct Join {
-    x: usize,
-    y: usize,
-    join_type: JoinType,
+pub struct Join {
+    pub x: usize,
+    pub y: usize,
+    pub join_type: JoinType,
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum LocationType {
+pub enum LocationType {
     Corner,
     Edge,
     Interior,
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum JoinType {
+pub enum JoinType {
     Border,
     Middle,
 }
@@ -54,7 +54,7 @@ impl PuzzleStructure {
             panic!("There must be at least one border and middle join type");
         }
 
-        let grid: Vec<Vec<Location>> = (0..width)
+        let grid: Vec<Vec<GridLocation>> = (0..width)
             .into_iter()
             .map(|x| {
                 (0..height)
@@ -95,7 +95,7 @@ impl PuzzleStructure {
                             _ => LocationType::Interior,
                         };
 
-                        Location {
+                        GridLocation {
                             x,
                             y,
                             location_type,

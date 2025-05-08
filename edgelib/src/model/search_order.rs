@@ -7,8 +7,8 @@ pub struct SearchOrder {
 
 #[derive(Clone)]
 pub struct Location {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 pub enum SearchOption {

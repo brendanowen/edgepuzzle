@@ -1,12 +1,12 @@
-use super::{PuzzleStructure, SearchOrder};
+use super::{JoinType, LocationType, PuzzleStructure, SearchOrder, search_order::Location};
 
 #[derive(Clone, Debug)]
 pub struct SearchProgress {
-    width: usize,
-    height: usize,
-    size: usize,
-    initial: Used,
-    progress: Vec<Used>,
+    pub width: usize,
+    pub height: usize,
+    pub size: usize,
+    pub end_point: Used,
+    pub progress: Vec<Used>,
 }
 
 #[derive(Clone, Debug)]
@@ -33,7 +33,7 @@ impl SearchProgress {
             panic!("Search order and Puzzle structure height needs to match");
         }
 
-        let initial: Used = Used {
+        let end_point: Used = Used {
             corners: puzzle_structure.corners,
             edges: puzzle_structure.edges,
             interiors: puzzle_structure.interiors,
@@ -41,12 +41,54 @@ impl SearchProgress {
             middles: puzzle_structure.middle_join_counts.iter().sum(),
         };
 
+        let mut current_used = Used {
+            corners: 0,
+            edges: 0,
+            interiors: 0,
+            borders: 0,
+            middles: 0,
+        };
+
+        let mut progress: Vec<Used> = vec![current_used.clone()];
+
+        let mut filled: Vec<Vec<bool>> = vec![vec![false; search_order.height]; search_order.width];
+        search_order.order.iter().for_each(|location: &Location| {
+            let mut next_used: Used = current_used.clone();
+            let grid_location = &puzzle_structure.grid[location.x][location.y];
+            grid_location.joins.iter().for_each(|join| {
+                if filled[join.x][join.y] {
+                    match join.join_type {
+                        JoinType::Border => {
+                            next_used.borders += 1;
+                        }
+                        JoinType::Middle => {
+                            next_used.middles += 1;
+                        }
+                    }
+                }
+            });
+            match grid_location.location_type {
+                LocationType::Corner => {
+                    next_used.corners += 1;
+                }
+                LocationType::Edge => {
+                    next_used.edges += 1;
+                }
+                LocationType::Interior => {
+                    next_used.interiors += 1;
+                }
+            }
+            filled[location.x][location.y] = true;
+            progress.push(next_used.clone());
+            current_used = next_used;
+        });
+
         SearchProgress {
             width: puzzle_structure.width,
             height: puzzle_structure.height,
             size: search_order.size,
-            initial: initial.clone(),
-            progress: vec![initial.clone()],
+            end_point: end_point.clone(),
+            progress,
         }
     }
 }

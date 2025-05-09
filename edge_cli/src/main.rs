@@ -2,7 +2,6 @@ use edgelib::model::FastCombinations;
 use edgelib::model::SearchNodes;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use edgelib::model::PuzzleCombinations;
 use edgelib::model::PuzzleStructure;
 use edgelib::model::SearchOption;
 use edgelib::model::SearchOrder;
@@ -41,6 +40,37 @@ enum Commands {
         /// Comma-delimited list of search orders to calculate.
         #[arg(short, long, value_enum, num_args = 1.., value_delimiter = ',')]
         searches: Vec<SearchType>,
+
+        /// Comma-delimited list of border join counts.
+        #[arg(long, value_name = "INTEGERS", num_args = 1.., value_delimiter = ',')]
+        border_joins: Option<Vec<usize>>,
+
+        /// Comma-delimited list of middle join counts.
+        #[arg(long, value_name = "INTEGERS", num_args = 1.., value_delimiter = ',')]
+        middle_joins: Option<Vec<usize>>,
+
+        /// Output search profile. "-" writes to stdout.
+        #[arg(short, long, value_name = "CSV FILE")]
+        output: String,
+    },
+
+    /// Outputs the combinations pieces and probability profile of joins
+    Probability {
+        /// Width of puzzle
+        #[arg(short, long, value_name = "INTEGER")]
+        x: usize,
+
+        /// Height of puzzle
+        #[arg(short, long, value_name = "INTEGER")]
+        y: usize,
+
+        /// Border edge types
+        #[arg(short, long, value_name = "INTEGER")]
+        border: usize,
+
+        /// Middle edge types
+        #[arg(short, long, value_name = "INTEGER")]
+        middle: usize,
 
         /// Comma-delimited list of border join counts.
         #[arg(long, value_name = "INTEGERS", num_args = 1.., value_delimiter = ',')]
@@ -115,6 +145,7 @@ fn main() {
         } => {
             let mut puzzle_structure: PuzzleStructure =
                 PuzzleStructure::new(*x, *y, *border, *middle);
+
             if let Some(middles) = middle_joins {
                 puzzle_structure.middle_join_counts = middles.clone();
             }
@@ -152,6 +183,78 @@ fn main() {
                 for search_node in search_nodes.iter() {
                     result_string.push_str(&format!(",{}", search_node.nodes[depth]));
                 }
+                result_string.push_str("\n");
+            }
+
+            output_default_stdout(output, result_string);
+        }
+
+        Commands::Probability {
+            x,
+            y,
+            border,
+            middle,
+            output,
+            border_joins,
+            middle_joins,
+        } => {
+            let mut puzzle_structure: PuzzleStructure =
+                PuzzleStructure::new(*x, *y, *border, *middle);
+
+            if let Some(middles) = middle_joins {
+                puzzle_structure.middle_join_counts = middles.clone();
+            }
+            if let Some(borders) = border_joins {
+                puzzle_structure.border_join_counts = borders.clone();
+            }
+
+            let puzzle_combinations: FastCombinations = FastCombinations::new(&puzzle_structure);
+
+            let mut result_string = String::new();
+            result_string.push_str("Depth,Middle Probability,Border Probability,Corner Combinations,Edge Combinations,Interior Combinations\n");
+            let max_depth = *vec![
+                puzzle_combinations.log10_middle.len(),
+                puzzle_combinations.log10_border.len(),
+                puzzle_combinations.log10_corner.len(),
+                puzzle_combinations.log10_edge.len(),
+                puzzle_combinations.log10_interior.len(),
+            ]
+            .iter()
+            .max()
+            .unwrap();
+
+            for depth in 0..max_depth {
+                result_string.push_str(&format!("{}", depth));
+                if depth < puzzle_combinations.log10_middle.len() {
+                    result_string
+                        .push_str(&format!(",{}", puzzle_combinations.log10_middle[depth]));
+                } else {
+                    result_string.push_str(&format!(","));
+                }
+                if depth < puzzle_combinations.log10_border.len() {
+                    result_string
+                        .push_str(&format!(",{}", puzzle_combinations.log10_border[depth]));
+                } else {
+                    result_string.push_str(&format!(","));
+                }
+                if depth < puzzle_combinations.log10_corner.len() {
+                    result_string
+                        .push_str(&format!(",{}", puzzle_combinations.log10_corner[depth]));
+                } else {
+                    result_string.push_str(&format!(","));
+                }
+                if depth < puzzle_combinations.log10_edge.len() {
+                    result_string.push_str(&format!(",{}", puzzle_combinations.log10_edge[depth]));
+                } else {
+                    result_string.push_str(&format!(","));
+                }
+                if depth < puzzle_combinations.log10_interior.len() {
+                    result_string
+                        .push_str(&format!(",{}", puzzle_combinations.log10_interior[depth]));
+                } else {
+                    result_string.push_str(&format!(","));
+                }
+
                 result_string.push_str("\n");
             }
 

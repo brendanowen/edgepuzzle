@@ -1,4 +1,4 @@
-use super::{PuzzleCombinations, SearchProgress, Used};
+use super::{FastCombinations, PuzzleCombinations, SearchProgress, Used};
 
 #[derive(Clone, Debug)]
 pub struct SearchNodes {
@@ -6,7 +6,7 @@ pub struct SearchNodes {
 }
 
 impl SearchNodes {
-    pub fn new(puzzle_combinations: &PuzzleCombinations, search_progress: &SearchProgress) -> Self {
+    pub fn new(puzzle_combinations: &FastCombinations, search_progress: &SearchProgress) -> Self {
         if search_progress.width <= 1 || search_progress.height <= 1 {
             panic!("Width and height must be greater than 1");
         }

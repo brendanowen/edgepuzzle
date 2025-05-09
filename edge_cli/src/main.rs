@@ -1,3 +1,4 @@
+use edgelib::model::FastCombinations;
 use edgelib::model::SearchNodes;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -121,8 +122,7 @@ fn main() {
                 puzzle_structure.border_join_counts = borders.clone();
             }
 
-            let puzzle_combinations: PuzzleCombinations =
-                PuzzleCombinations::new(&puzzle_structure);
+            let puzzle_combinations: FastCombinations = FastCombinations::new(&puzzle_structure);
 
             let search_orders: Vec<SearchOrder> = searches
                 .iter()
